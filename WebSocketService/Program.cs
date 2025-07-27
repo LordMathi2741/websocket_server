@@ -3,6 +3,12 @@ using WebSocketService;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+});
+
 builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(8080));
 
 var app = builder.Build();
@@ -21,5 +27,7 @@ app.MapGet("/ws",  async context =>
         context.Response.StatusCode = 400;
     }
 });
+
+app.UseCors("AllowAllOrigins");
 
 app.Run();
