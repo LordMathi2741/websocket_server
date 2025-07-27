@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+services:
+  websocketservice:
+    build:
+      context: "/Users/lordmathi2741/Documents/Proyects/ASP NET/WebSocketService"
+      dockerfile: "WebSocketService/Dockerfile"
+      target: "base"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/WebSocketService.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+      DOTNET_USE_POLLING_FILE_WATCHER: "true"
+    image: "websocketservice:dev"
+    ports: []
+    volumes:
+    - "/Users/lordmathi2741/Documents/Proyects/ASP NET/WebSocketService/WebSocketService:/app:rw"
+    - "/Users/lordmathi2741/Documents/Proyects/ASP NET/WebSocketService:/src:rw"
+    - "/Users/lordmathi2741/.nuget/packages:/root/.nuget/packages"
+    working_dir: "/app"

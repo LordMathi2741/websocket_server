@@ -1,0 +1,10 @@
+﻿services:
+  websocketservice:
+    image: websocketservice
+    build:
+      context: .
+      dockerfile: WebSocketService/Dockerfile
+    ports:
+      - "8003:8080"
+    restart: 
+      always
