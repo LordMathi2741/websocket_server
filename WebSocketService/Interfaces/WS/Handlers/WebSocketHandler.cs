@@ -1,15 +1,13 @@
-using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
-using WebSocketService.Domain.Model.Commands;
+using WebSocketService.Application.Helper;
 using WebSocketService.Interfaces.WS.Resources;
 
-namespace WebSocketService.Interfaces.WS.Handler;
+namespace WebSocketService.Interfaces.WS.Handlers;
 
 public static class WebSocketHandler
 {
-    private static readonly ConcurrentDictionary<WebSocket, string> _sockets = new();
 
     public static async Task HandleWebSocketAsync(WebSocket webSocket)
     {
@@ -21,7 +19,7 @@ public static class WebSocketHandler
             if (result.MessageType == WebSocketMessageType.Text)
             {
                 var clientId = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                _sockets.TryAdd(webSocket, clientId);
+                SessionSuportHelper.AddSocket(webSocket, clientId);
                 Console.WriteLine($"Client connected: {clientId}");
             }
 
@@ -31,7 +29,7 @@ public static class WebSocketHandler
 
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
-                    _sockets.TryRemove(webSocket, out _);
+                    SessionSuportHelper.RemoveSocket(webSocket);
                     await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closing", CancellationToken.None);
                 }
                 else if (result.MessageType == WebSocketMessageType.Text)
@@ -42,10 +40,10 @@ public static class WebSocketHandler
                         PropertyNameCaseInsensitive = true
                     });
 
-                    if (request != null && !string.IsNullOrEmpty(request.Message) && _sockets.TryGetValue(webSocket, out var senderId))
+                    if (request != null && !string.IsNullOrEmpty(request.Message) && SessionSuportHelper.sockets.TryGetValue(webSocket, out var senderId))
                     {
                         Console.WriteLine($"Received from {senderId}: {request.Message}");
-                        await BroadcastMessageAsync(senderId, request.Message);
+                        await BroadcastMessageHandler.Handle(senderId, request.Message);
                     }
                     else
                     {
@@ -57,22 +55,7 @@ public static class WebSocketHandler
         catch (Exception ex)
         {
             Console.WriteLine($"WS error: {ex.Message}");
-            _sockets.TryRemove(webSocket, out _);
-        }
-    }
-
-    private static async Task BroadcastMessageAsync(string senderId, string message)
-    {
-        var resource = new CreateSenderNotificationCommand(senderId, message);
-        var payload = JsonSerializer.Serialize(resource);
-        var bytes = Encoding.UTF8.GetBytes(payload);
-
-        foreach (var socket in _sockets.Keys)
-        {
-            if (socket.State == WebSocketState.Open)
-            {
-                await socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, true, CancellationToken.None);
-            }
+            SessionSuportHelper.RemoveSocket(webSocket);
         }
     }
 }
