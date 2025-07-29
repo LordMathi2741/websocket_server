@@ -1,5 +1,5 @@
 
-using WebSocketService;
+using WebSocketService.Interfaces.WS.Handler;
 
 var builder = WebApplication.CreateBuilder(args);
 
